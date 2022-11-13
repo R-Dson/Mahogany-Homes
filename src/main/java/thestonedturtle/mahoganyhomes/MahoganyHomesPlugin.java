@@ -52,7 +52,6 @@ public class MahoganyHomesPlugin extends Plugin
 	static final Pattern CONTRACT_PATTERN = Pattern.compile("(Please could you g|G)o see (\\w*)[ ,][\\w\\s,-]*[?.] You can get another job once you have furnished \\w* home\\.");
 	private static final Pattern CONTRACT_FINISHED = Pattern.compile("You have completed [\\d,]* contracts with a total of [\\d,]* points?\\.");
 	private static final Pattern REQUEST_CONTACT_TIER = Pattern.compile("Could I have an? (\\w*) contract please\\?");
-	private static final Duration PLUGIN_TIMEOUT_DURATION = Duration.ofMinutes(5);
 
 	@Getter
 	@Inject
@@ -112,6 +111,8 @@ public class MahoganyHomesPlugin extends Plugin
 	@Getter
 	private int sessionPoints = 0;
 
+	private Duration pluginTimeoutDuration = Duration.ofMinutes(5);
+
 	@Override
 	public void startUp()
 	{
@@ -125,6 +126,7 @@ public class MahoganyHomesPlugin extends Plugin
 		}
 		lastChanged = Instant.now();
 		lastCompletedCount = 0;
+		pluginTimeoutDuration = Duration.ofMinutes(config.sessionTimeout());
 	}
 
 	@Override
@@ -170,7 +172,11 @@ public class MahoganyHomesPlugin extends Plugin
 				refreshHintArrow(client.getLocalPlayer().getWorldLocation());
 			}
 		}
-
+		else if (c.getKey().equals(MahoganyHomesConfig.SESSION_TIMEOUT_KEY))
+		{
+			pluginTimeoutDuration = Duration.ofMinutes(config.sessionTimeout());
+		}
+		
 		inventoryOverlay.invalidateCache();
 	}
 
@@ -225,7 +231,7 @@ public class MahoganyHomesPlugin extends Plugin
 
 		if (e.getEntry().getOption().equals(MahoganyHomesOverlay.TIMEOUT_OPTION))
 		{
-			lastChanged = Instant.now().minus(PLUGIN_TIMEOUT_DURATION);
+			lastChanged = Instant.now().minus(pluginTimeoutDuration);
 			// Remove worldPoint and clear hint arrow when plugin times out
 			worldMapPointManager.removeIf(MahoganyHomesWorldPoint.class::isInstance);
 			client.clearHintArrow();
@@ -612,7 +618,7 @@ public class MahoganyHomesPlugin extends Plugin
 
 	boolean isPluginTimedOut()
 	{
-		return lastChanged != null && Duration.between(lastChanged, Instant.now()).compareTo(PLUGIN_TIMEOUT_DURATION) >= 0;
+		return lastChanged != null && Duration.between(lastChanged, Instant.now()).compareTo(pluginTimeoutDuration) >= 0;
 	}
 
 	int getPointsForCompletingTask()
