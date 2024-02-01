@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -176,8 +178,9 @@ public class MahoganyHomesPlugin extends Plugin
 		{
 			pluginTimeoutDuration = Duration.ofMinutes(config.sessionTimeout());
 		}
-		
+
 		inventoryOverlay.invalidateCache();
+
 	}
 
 	@Subscribe
@@ -639,5 +642,13 @@ public class MahoganyHomesPlugin extends Plugin
 		// Normalizes tier from 5-8 to 1-4
 		tier -= 4;
 		contractTier = Math.max(tier, 0);
+	}
+
+	public Set<Integer> getRepairableVarbs()
+	{
+		return varbMap.keySet()
+			.stream()
+			.filter(this::doesHotspotRequireAttention)
+			.collect(Collectors.toSet());
 	}
 }
